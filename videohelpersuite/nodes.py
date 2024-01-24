@@ -108,6 +108,7 @@ class VideoCombine:
                 "format": (["image/gif", "image/webp"] + ffmpeg_formats,),
                 "pingpong": ("BOOLEAN", {"default": False}),
                 "save_output": ("BOOLEAN", {"default": True}),
+                "custom_output_dir": ("STRING", {"default": ""}),  # Add custom output directory input
             },
             "optional": {
                 "audio": ("VHS_AUDIO",),
@@ -138,10 +139,11 @@ class VideoCombine:
         extra_pnginfo=None,
         audio=None,
         unique_id=None,
-        manual_format_widgets=None
+        manual_format_widgets=None,
+        custom_output_dir="",
     ):
-        # get output information
-        output_dir = (
+        # Use custom output directory if provided, otherwise use default
+        output_dir = custom_output_dir if custom_output_dir else (
             folder_paths.get_output_directory()
             if save_output
             else folder_paths.get_temp_directory()
@@ -195,9 +197,6 @@ class VideoCombine:
 
         format_type, format_ext = format.split("/")
         if format_type == "image":
-            image_kwargs = {}
-            if format_ext == "gif":
-                image_kwargs['disposal'] = 2
             file = f"{filename}_{counter:05}.{format_ext}"
             file_path = os.path.join(full_output_folder, file)
             images = tensor_to_bytes(images)
@@ -213,7 +212,6 @@ class VideoCombine:
                 duration=round(1000 / frame_rate),
                 loop=loop_count,
                 compress_level=4,
-                **image_kwargs
             )
             output_files.append(file_path)
         else:
